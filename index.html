@@ -133,10 +133,13 @@ a { color: var(--accent); text-decoration: none; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 24px 0; gap: 16px; flex-wrap: wrap;
 }
+b{
+  color: var(--accent);
+}
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo-icon {
   width: 36px; height: 36px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  background: linear-gradient(135deg, var(--accent), #e9b20e);
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 16px; font-weight: 800;
   font-family: 'Space Grotesk', sans-serif;
@@ -627,8 +630,8 @@ input[type="range"]::-moz-range-thumb {
   <!-- هدر -->
   <header class="app-header">
     <div class="logo">
-      <div class="logo-icon" aria-hidden="true">S</div>
-      <h1>کُلِین - برنامه ریز</h1>
+      <div class="logo-icon" aria-hidden="true">K</div>
+      <h1><b>کُلِین</b> - برنامه ریز</h1>
     </div>
     <div class="header-actions">
       <button class="icon-btn" id="undoBtn" title="برگردان" aria-label="برگردان" disabled><i class="fas fa-undo"></i></button>
@@ -702,7 +705,7 @@ input[type="range"]::-moz-range-thumb {
         <!-- طول جلسه / استراحت / زمان شروع -->
         <div class="form-row">
           <div class="form-group">
-            <label for="sessionLength">طول جلسه</label>
+            <label for="sessionLength">زمان هر پارت مطالعه</label>
             <select id="sessionLength">
               <option value="25">۲۵ دقیقه</option>
               <option value="30">۳۰ دقیقه</option>
@@ -1001,7 +1004,7 @@ input[type="range"]::-moz-range-thumb {
   }
 
   /* ====================== مدیریت دروس ====================== */
-  function createSubject(name = '', priority = 3, credits = 3, hours = 5) {
+  function createSubject(name = '', priority = '', credits = '', hours = '') {
     return { id: ++subjectIdCounter, name, priority: Number(priority), credits: Number(credits), hours: Number(hours) };
   }
 
@@ -1719,7 +1722,6 @@ input[type="range"]::-moz-range-thumb {
       <div class="stat-card"><div class="stat-label">کل زمان استراحت</div><div class="stat-value">${totalBreakH}</div></div>
       <div class="stat-card"><div class="stat-label">میانگین روزانه</div><div class="stat-value">${avgDaily}</div></div>
       <div class="stat-card"><div class="stat-label">زمان آزاد</div><div class="stat-value">${freeTime}</div></div>
-      <div class="stat-card"><div class="stat-label">درصد تکمیل</div><div class="stat-value accent">${completion.toFixed(0)}%</div></div>
     `;
 
     drawBarChart(subjectHours);
