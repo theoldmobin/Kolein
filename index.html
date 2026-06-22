@@ -1,0 +1,2383 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>کُلِین — برنامه‌ریز هوشمند مطالعه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+/* ====================== متغیرهای رنگ ====================== */
+:root {
+  --bg: #f0ede6;
+  --bg-alt: #e8e4db;
+  --card: rgba(255,255,255,0.72);
+  --card-solid: #ffffff;
+  --fg: #1a1a2e;
+  --fg-secondary: #4a4a5a;
+  --muted: #8a8a9a;
+  --accent: #0d7377;
+  --accent-hover: #0a5c5f;
+  --accent-light: rgba(13,115,119,0.1);
+  --accent-glow: rgba(13,115,119,0.25);
+  --border: rgba(0,0,0,0.07);
+  --border-strong: rgba(0,0,0,0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.10);
+  --break-bg: #e2e8f0;
+  --break-fg: #64748b;
+  --lunch-bg: #fef3c7;
+  --lunch-fg: #92400e;
+  --danger: #dc2626;
+  --danger-bg: rgba(220,38,38,0.08);
+  --success: #16a34a;
+  --success-bg: rgba(22,163,74,0.08);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --font-display: 'Vazirmatn', 'Space Grotesk', sans-serif;
+  --font-body: 'Vazirmatn', 'Space Grotesk', sans-serif;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #0f1115;
+  --bg-alt: #171a1f;
+
+  --card: rgba(28, 31, 37, 0.82);
+  --card-solid: #20242b;
+
+  --fg: #f5f5f4;
+  --fg-secondary: #b3b8c2;
+  --muted: #7b818d;
+
+  --accent: #22c55e;
+  --accent-hover: #16a34a;
+  --accent-light: rgba(34,197,94,0.12);
+  --accent-glow: rgba(34,197,94,0.28);
+
+  --border: rgba(255,255,255,0.06);
+  --border-strong: rgba(255,255,255,0.12);
+
+  --shadow-sm: 0 2px 4px rgba(0,0,0,.25);
+  --shadow-md: 0 8px 20px rgba(0,0,0,.35);
+  --shadow-lg: 0 16px 36px rgba(0,0,0,.45);
+  --shadow-xl: 0 24px 56px rgba(0,0,0,.55);
+
+  --break-bg: #2a2f37;
+  --break-fg: #b0b6c0;
+
+  --lunch-bg: rgba(251,191,36,.12);
+  --lunch-fg: #fbbf24;
+
+  --danger: #ef4444;
+  --danger-bg: rgba(239,68,68,.12);
+
+  --success: #22c55e;
+  --success-bg: rgba(34,197,94,.12);
+}
+
+/* ====================== ریست و پایه ====================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  min-height: 100vh;
+  transition: background var(--transition-slow), color var(--transition-slow);
+  overflow-x: hidden;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.4; font-weight: 700; }
+input, select, button, textarea { font-family: inherit; font-size: inherit; }
+a { color: var(--accent); text-decoration: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+::selection { background: var(--accent); color: #fff; }
+
+/* ====================== صفحه بارگذاری ====================== */
+#loader {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader-ring {
+  width: 48px; height: 48px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.loader-text { margin-top: 16px; color: var(--muted); font-size: 14px; font-weight: 500; letter-spacing: 0.3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ====================== کانتینر اپ ====================== */
+#app {
+  max-width: 1100px; margin: 0 auto;
+  padding: 0 20px 60px;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s;
+}
+#app.visible { opacity: 1; transform: translateY(0); }
+
+/* ====================== هدر ====================== */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 0; gap: 16px; flex-wrap: wrap;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 800;
+  font-family: 'Space Grotesk', sans-serif;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+.logo h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.header-actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--fg-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all var(--transition);
+  backdrop-filter: blur(8px);
+}
+.icon-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent-glow); }
+.icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.icon-btn:disabled:hover { background: var(--card); color: var(--fg-secondary); }
+
+/* ====================== نوار نقل‌قول ====================== */
+.quote-bar {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 18px;
+  margin-bottom: 24px; font-style: italic;
+  color: var(--fg-secondary); font-size: 14px;
+  backdrop-filter: blur(8px); box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 12px;
+  animation: fadeSlideIn 0.5s ease 0.4s both;
+}
+.quote-bar i { color: var(--accent); font-size: 16px; flex-shrink: 0; order: -1; }
+
+/* ====================== کارت‌ها ====================== */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 24px;
+  backdrop-filter: blur(12px); box-shadow: var(--shadow-md);
+  margin-bottom: 24px; transition: box-shadow var(--transition);
+}
+.card:hover { box-shadow: var(--shadow-lg); }
+
+/* ====================== بخش‌های تاشو ====================== */
+.section-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none; margin-bottom: 0;
+  transition: margin var(--transition);
+}
+.section-toggle.open { margin-bottom: 20px; }
+.section-toggle h2 { font-size: 18px; font-weight: 800; }
+.section-toggle .chevron {
+  font-size: 12px; color: var(--muted);
+  transition: transform var(--transition);
+}
+.section-toggle.open .chevron { transform: rotate(180deg); }
+.section-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+.section-body.open { max-height: 5000px; opacity: 1; }
+
+/* ====================== عناصر فرم ====================== */
+.form-group { margin-bottom: 18px; }
+.form-group > label, .form-group > .label-row {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--fg-secondary); margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.label-row { display: flex !important; align-items: center; justify-content: space-between; }
+.label-row span { color: var(--accent); font-weight: 700; font-size: 15px; text-transform: none; letter-spacing: 0; direction: ltr; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+input[type="number"], input[type="text"], input[type="time"], select {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong); background: var(--card-solid);
+  color: var(--fg); font-size: 14px; transition: all var(--transition);
+  -webkit-appearance: none; appearance: none;
+}
+input[type="number"], input[type="time"] { direction: ltr; text-align: left; }
+input[type="number"]:focus, input[type="text"]:focus, input[type="time"]:focus, select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light);
+  outline: none;
+}
+input[type="number"].invalid, input[type="text"].invalid, select.invalid {
+  border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-bg);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%238a8a9a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  padding-left: 32px;
+  padding-right: 14px;
+  cursor: pointer;
+}
+.validation-msg {
+  font-size: 12px; color: var(--danger); margin-top: 4px;
+  display: none; align-items: center; gap: 4px;
+}
+.validation-msg.show { display: flex; }
+
+/* ====================== اسلایدرها ====================== */
+.slider-wrap { position: relative; padding-top: 4px; direction: ltr; }
+input[type="range"] {
+  width: 100%; height: 6px; border-radius: 3px;
+  background: var(--border-strong); outline: none;
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--accent);
+  border: 3px solid var(--card-solid);
+  box-shadow: 0 2px 8px var(--accent-glow);
+  cursor: pointer; transition: transform var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 3px solid var(--card-solid);
+  box-shadow: 0 2px 8px var(--accent-glow); cursor: pointer;
+}
+.slider-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 8px; font-size: 12px; color: var(--muted);
+  direction: rtl;
+}
+.slider-labels .active-label { color: var(--accent); font-weight: 600; }
+.difficulty-display {
+  text-align: center; margin-top: 8px;
+  font-size: 15px; font-weight: 600; color: var(--accent);
+}
+
+/* ====================== لیست دروس ====================== */
+.subjects-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+}
+.subjects-header .left { display: flex; align-items: center; gap: 10px; }
+.search-wrap { position: relative; display: inline-block; }
+.search-wrap i {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 12px;
+}
+.search-wrap input {
+  padding-right: 30px !important;
+  padding-left: 14px !important;
+  width: 160px; font-size: 13px !important;
+}
+.btn-sm {
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--accent); background: var(--accent-light);
+  color: var(--accent); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-sm:hover { background: var(--accent); color: #fff; }
+
+.subject-row {
+  display: grid;
+  grid-template-columns: 28px 1.2fr 0.7fr 0.5fr 0.6fr 32px;
+  gap: 8px; align-items: center; padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  transition: all var(--transition);
+  animation: fadeSlideIn 0.3s ease both;
+}
+.subject-row:last-child { border-bottom: none; }
+.subject-row.dragging { opacity: 0.4; }
+.subject-row.drag-over { border-top: 2px solid var(--accent); }
+.drag-handle {
+  cursor: grab; color: var(--muted); font-size: 14px;
+  text-align: center; user-select: none; padding: 4px 0;
+}
+.drag-handle:active { cursor: grabbing; }
+.subject-row input, .subject-row select { font-size: 13px !important; padding: 8px 10px !important; }
+.subject-row input[type="number"] { direction: ltr; text-align: left; }
+.delete-btn {
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  border: none; background: transparent; color: var(--muted);
+  cursor: pointer; font-size: 16px; transition: all var(--transition);
+  display: flex; align-items: center; justify-content: center;
+}
+.delete-btn:hover { background: var(--danger-bg); color: var(--danger); }
+.subject-color-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; margin-left: 6px; flex-shrink: 0;
+}
+.subject-name-wrap { display: flex; align-items: center; }
+.empty-subjects {
+  text-align: center; padding: 32px; color: var(--muted); font-size: 14px;
+}
+
+/* ====================== دکمه تولید ====================== */
+.generate-wrap { text-align: center; margin-top: 8px; }
+.btn-generate {
+  padding: 14px 48px; border-radius: var(--radius-md);
+  border: none; background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  color: #fff; font-size: 16px; font-weight: 800;
+  font-family: var(--font-display); cursor: pointer;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  transition: all var(--transition); letter-spacing: 0.3px;
+  position: relative; overflow: hidden;
+}
+.btn-generate:hover { transform: translateY(-2px); box-shadow: 0 6px 28px var(--accent-glow); }
+.btn-generate:active { transform: translateY(0); }
+.btn-generate::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15));
+  opacity: 0; transition: opacity var(--transition);
+}
+.btn-generate:hover::after { opacity: 1; }
+
+/* ====================== تغییر نمای ====================== */
+.view-toggle {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--bg-alt); border-radius: var(--radius-sm);
+  margin-bottom: 16px; width: fit-content;
+}
+.view-toggle button {
+  padding: 8px 20px; border: none; border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: all var(--transition);
+}
+.view-toggle button.active { background: var(--card-solid); color: var(--fg); box-shadow: var(--shadow-sm); }
+
+/* ====================== نوار پیشرفت ====================== */
+.progress-wrap { margin-bottom: 16px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.progress-track {
+  height: 6px; border-radius: 3px; background: var(--border-strong); overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), #0ea5e9);
+  transition: width 0.6s ease;
+  width: 0%;
+}
+
+/* ====================== صفحه‌بندی ====================== */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.pagination button {
+  padding: 6px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--card-solid);
+  color: var(--fg-secondary); cursor: pointer; font-size: 13px;
+  font-weight: 500; transition: all var(--transition);
+}
+.pagination button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-info { font-size: 13px; color: var(--fg-secondary); font-weight: 500; min-width: 140px; text-align: center; direction: rtl; }
+.page-size-select {
+  padding: 6px 10px; font-size: 13px !important;
+  width: auto !important; border-radius: var(--radius-sm) !important;
+  direction: rtl;
+}
+
+/* ====================== جدول برنامه ====================== */
+.table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-sm); }
+#scheduleTable { width: 100%; border-collapse: collapse; font-size: 14px; }
+#scheduleTable thead th {
+  padding: 10px 14px; text-align: start; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted);
+  font-weight: 600; border-bottom: 2px solid var(--border-strong);
+  position: sticky; top: 0; background: var(--card-solid); z-index: 2;
+}
+#scheduleTable tbody tr {
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--border);
+}
+#scheduleTable tbody tr:hover { background: var(--accent-light); }
+#scheduleTable td { padding: 10px 14px; vertical-align: middle; }
+#scheduleTable .day-cell {
+  font-weight: 700; font-family: var(--font-display);
+  font-size: 13px; color: var(--accent); white-space: nowrap;
+  border-inline-end: 2px solid var(--border-strong);
+}
+#scheduleTable .time-cell { white-space: nowrap; font-size: 13px; color: var(--fg-secondary); font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
+#scheduleTable .subject-cell { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+#scheduleTable .duration-cell { font-variant-numeric: tabular-nums; direction: ltr; text-align: left; }
+#scheduleTable .notes-cell { color: var(--muted); font-size: 13px; min-width: 80px; }
+
+/* ردیف‌های استراحت و ناهار */
+.row-break { background: var(--break-bg) !important; }
+.row-break td { color: var(--break-fg); font-style: italic; font-size: 13px; }
+.row-lunch { background: var(--lunch-bg) !important; }
+.row-lunch td { color: var(--lunch-fg); font-weight: 600; font-size: 13px; }
+.subject-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  white-space: nowrap;
+}
+
+/* سلول‌های قابل ویرایش */
+.editable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; transition: background var(--transition); }
+.editable:hover { background: var(--accent-light); }
+.edit-input {
+  width: 100%; padding: 4px 8px; border: 1px solid var(--accent);
+  border-radius: 4px; font-size: 13px; background: var(--card-solid); color: var(--fg);
+}
+.edit-input[type="number"], .edit-input[type="time"] { direction: ltr; text-align: left; }
+
+/* ====================== نمای تقویمی ====================== */
+.calendar-nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; margin-bottom: 20px;
+}
+.calendar-nav button {
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--card-solid);
+  color: var(--fg-secondary); cursor: pointer; transition: all var(--transition);
+}
+.calendar-nav button:hover { border-color: var(--accent); color: var(--accent); }
+.calendar-nav .month-label { font-family: var(--font-display); font-weight: 700; font-size: 16px; min-width: 180px; text-align: center; }
+.calendar-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.cal-header { padding: 8px; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+.cal-day {
+  min-height: 80px; padding: 6px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--card-solid);
+  transition: all var(--transition); font-size: 12px;
+}
+.cal-day:hover { border-color: var(--accent); box-shadow: var(--shadow-sm); }
+.cal-day.today { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+.cal-day .day-num { font-weight: 700; font-size: 13px; margin-bottom: 4px; color: var(--fg-secondary); direction: ltr; text-align: start; }
+.cal-day .cal-session {
+  height: 4px; border-radius: 2px; margin-bottom: 2px;
+  transition: height var(--transition);
+}
+.cal-day:hover .cal-session { height: 6px; }
+.cal-day.empty { border: none; background: transparent; }
+.cal-day.no-study { opacity: 0.4; }
+.cal-day-detail {
+  position: fixed; z-index: 100; background: var(--card-solid);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl); padding: 16px; min-width: 220px;
+  font-size: 13px; display: none;
+  animation: fadeSlideIn 0.2s ease;
+  direction: rtl;
+}
+.cal-day-detail.show { display: block; }
+.cal-day-detail h4 { font-size: 14px; margin-bottom: 8px; }
+.cal-detail-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.cal-detail-item .time-part { direction: ltr; margin-left: auto; font-size: 12px; color: var(--muted); }
+
+/* ====================== آمار ====================== */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-alt); border-radius: var(--radius-md);
+  padding: 16px; text-align: center;
+}
+.stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.stat-card .stat-value { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--fg); direction: ltr; }
+.stat-card .stat-value.accent { color: var(--accent); }
+.chart-section { margin-top: 24px; }
+.chart-section h3 { font-size: 15px; margin-bottom: 12px; color: var(--fg-secondary); }
+.chart-canvas { width: 100%; border-radius: var(--radius-sm); }
+
+/* ====================== نوار خروجی ====================== */
+.export-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-wrap: wrap; margin-top: 8px;
+}
+.export-btn {
+  padding: 8px 18px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--card-solid);
+  color: var(--fg-secondary); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all var(--transition);
+  display: flex; align-items: center; gap: 6px;
+}
+.export-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.export-btn.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+
+/* ====================== تست ====================== */
+#toastContainer {
+  position: fixed; bottom: 24px; left: 24px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast {
+  padding: 12px 20px; border-radius: var(--radius-sm);
+  background: var(--card-solid); border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-lg); font-size: 14px;
+  display: flex; align-items: center; gap: 10px;
+  pointer-events: auto; max-width: 360px;
+  animation: toastIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+.toast.removing { opacity: 0; transform: translateX(-100%); }
+.toast.success { border-right: 3px solid var(--success); }
+.toast.error { border-right: 3px solid var(--danger); }
+.toast.info { border-right: 3px solid var(--accent); }
+.toast i { font-size: 16px; flex-shrink: 0; }
+.toast.success i { color: var(--success); }
+.toast.error i { color: var(--danger); }
+.toast.info i { color: var(--accent); }
+
+/* ====================== کانفتی ====================== */
+#confettiCanvas {
+  position: fixed; inset: 0; z-index: 9998;
+  pointer-events: none; display: none;
+}
+
+/* ====================== انیمیشن‌ها ====================== */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-in { animation: fadeSlideIn 0.4s ease both; }
+
+/* ====================== ریسپانسیو ====================== */
+@media (max-width: 768px) {
+  #app { padding: 0 12px 40px; }
+  .card { padding: 16px; border-radius: var(--radius-md); }
+  .subject-row {
+    grid-template-columns: 24px 1fr;
+    gap: 6px; padding: 10px 0;
+  }
+  .subject-row .drag-handle { grid-column: 1; grid-row: 1; }
+  .subject-row .subject-name-wrap { grid-column: 2; grid-row: 1; }
+  .subject-row .subject-priority,
+  .subject-row .subject-credits,
+  .subject-row .subject-hours { grid-column: 2; }
+  .subject-row .delete-btn { grid-column: 1; grid-row: 5; justify-self: start; }
+  .subjects-header { flex-direction: column; align-items: stretch; }
+  .search-wrap input { width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .cal-day { min-height: 50px; padding: 3px; }
+  .cal-day .day-num { font-size: 11px; }
+  .view-toggle { width: 100%; }
+  .view-toggle button { flex: 1; }
+  #scheduleTable { font-size: 13px; }
+  #scheduleTable td { padding: 8px 10px; }
+  .export-bar { flex-direction: column; }
+  .export-btn { width: 100%; justify-content: center; }
+  .logo h1 { font-size: 18px; }
+  .btn-generate { width: 100%; padding: 14px 24px; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card .stat-value { font-size: 20px; }
+  .calendar-grid { gap: 1px; }
+  .cal-day { min-height: 40px; }
+  .subject-badge { font-size: 12px; padding: 2px 8px; }
+}
+
+/* ====================== چاپ ====================== */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .app-header, .quote-bar, #inputSection, .view-toggle, .pagination,
+  .export-bar, .progress-wrap, #toastContainer, #confettiCanvas, .icon-btn { display: none !important; }
+  .card { box-shadow: none !important; border: 1px solid #ddd !important; backdrop-filter: none !important; background: #fff !important; break-inside: avoid; }
+  #scheduleSection, #statsSection { display: block !important; }
+  #tableView, #calendarView { display: block !important; }
+  #scheduleTable thead th { background: #f5f5f5 !important; color: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .row-break { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .row-lunch { background: #fffbe6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .subject-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ====================== کاهش حرکت ====================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- صفحه بارگذاری -->
+<div id="loader" role="status" aria-label="در حال بارگذاری">
+  <div class="loader-ring"></div>
+  <div class="loader-text">در حال آماده‌سازی کُلِین...</div>
+</div>
+
+<!-- بوم کانفتی -->
+<canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+<!-- پاپ‌آپ جزئیات روز تقویم -->
+<div class="cal-day-detail" id="calDayDetail" role="tooltip"></div>
+
+<!-- اپلیکیشن -->
+<div id="app">
+  <!-- هدر -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon" aria-hidden="true">S</div>
+      <h1>کُلِین - برنامه ریز</h1>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="undoBtn" title="برگردان" aria-label="برگردان" disabled><i class="fas fa-undo"></i></button>
+      <button class="icon-btn" id="redoBtn" title="دوباره" aria-label="انجام دوباره" disabled><i class="fas fa-redo"></i></button>
+      <button class="icon-btn" id="themeToggle" title="تغییر تم" aria-label="تغییر تم"><i class="fas fa-moon"></i></button>
+    </div>
+  </header>
+
+  <!-- نقل‌قول انگیزشی -->
+  <div class="quote-bar" id="quoteBar" aria-live="polite">
+    <i class="fas fa-quote-left" aria-hidden="true"></i>
+    <span id="quoteText"></span>
+  </div>
+
+  <main>
+    <!-- ============ بخش ورودی ============ -->
+    <section id="inputSection" class="card" aria-label="پیکربندی برنامه مطالعه">
+      <div class="section-toggle open" id="inputToggle" role="button" tabindex="0" aria-expanded="true" aria-controls="inputBody">
+        <h2>تنظیم برنامه مطالعه</h2>
+        <i class="fas fa-chevron-down chevron" aria-hidden="true"></i>
+      </div>
+      <div class="section-body open" id="inputBody">
+
+        <!-- تعداد روزهای مطالعه -->
+        <div class="form-group">
+          <label for="studyDays">تعداد روزهای مطالعه</label>
+          <input type="number" id="studyDays" min="1" max="365" value="7" aria-describedby="studyDaysErr">
+          <div class="validation-msg" id="studyDaysErr"><i class="fas fa-exclamation-circle"></i><span></span></div>
+        </div>
+
+        <!-- دروس -->
+        <div class="form-group">
+          <div class="subjects-header">
+            <div class="left">
+              <label style="margin:0">دروس</label>
+              <div class="search-wrap">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" id="searchSubjects" placeholder="جستجوی دروس..." aria-label="جستجوی دروس">
+              </div>
+            </div>
+            <button class="btn-sm" id="addSubjectBtn" type="button"><i class="fas fa-plus" aria-hidden="true"></i> افزودن درس</button>
+          </div>
+          <div id="subjectsList" role="list" aria-label="لیست دروس"></div>
+          <div class="validation-msg" id="subjectsErr"><i class="fas fa-exclamation-circle"></i><span></span></div>
+        </div>
+
+        <!-- سطح سختی -->
+        <div class="form-group">
+          <label>سطح سختی کلی مطالعه</label>
+          <div class="slider-wrap">
+            <input dir="rtl" type="range" id="difficulty" min="1" max="4" value="2" step="1" aria-label="سطح سختی">
+          </div>
+          <div class="slider-labels" id="diffLabels">
+            <span>آسان</span><span>معمولی</span><span>سخت</span><span>بسیار سخت</span>
+            <!-- <span>بسیار سخت</span><span>سخت</span><span>معمولی</span><span>آسان</span> -->
+          </div>
+          <div class="difficulty-display" id="diffDisplay">معمولی</div>
+        </div>
+
+        <!-- ساعات مطالعه روزانه -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="dailyHours">ساعات مطالعه روزانه ترجیحی</label>
+            <span id="dailyHoursVal">6 ساعت</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="dailyHours" min="1" max="12" value="6" step="0.5" aria-label="ساعات مطالعه روزانه">
+          </div>
+        </div>
+
+        <!-- طول جلسه / استراحت / زمان شروع -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sessionLength">طول جلسه</label>
+            <select id="sessionLength">
+              <option value="25">۲۵ دقیقه</option>
+              <option value="30">۳۰ دقیقه</option>
+              <option value="45" selected>۴۵ دقیقه</option>
+              <option value="60">۶۰ دقیقه</option>
+              <option value="90">۹۰ دقیقه</option>
+              <option value="120">۱۲۰ دقیقه</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="breakLength">طول استراحت بین دروس</label>
+            <select id="breakLength">
+              <option value="5" selected>۵ دقیقه</option>
+              <option value="10">۱۰ دقیقه</option>
+              <option value="15">۱۵ دقیقه</option>
+              <option value="20">۲۰ دقیقه</option>
+              <option value="30">۳۰ دقیقه</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="startTime">زمان شروع مطالعه</label>
+            <input type="time" id="startTime" value="08:00">
+          </div>
+        </div>
+
+        <!-- دکمه تولید -->
+        <div class="generate-wrap">
+          <button class="btn-generate" id="generateBtn" type="button">تولید برنامه مطالعه</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ بخش برنامه ============ -->
+    <section id="scheduleSection" style="display:none" aria-label="برنامه تولید شده">
+      <div class="card">
+        <!-- تغییر نمای -->
+        <div class="view-toggle" role="tablist" aria-label="نمای برنامه">
+          <button class="active" role="tab" aria-selected="true" data-view="table" id="tabTable">نمای جدولی</button>
+          <button role="tab" aria-selected="false" data-view="calendar" id="tabCalendar">نمای تقویمی</button>
+        </div>
+
+        <!-- پیشرفت -->
+        <div class="progress-wrap" id="progressWrap">
+          <div class="progress-label">
+            <span>پیشرفت برنامه مطالعه</span>
+            <span id="progressText">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <!-- صفحه‌بندی -->
+        <div class="pagination" id="pagination">
+          <button id="prevPage" aria-label="صفحه قبلی"><i class="fas fa-chevron-right"></i></button>
+          <span class="page-info" id="pageInfo">روز ۱ تا ۷</span>
+          <button id="nextPage" aria-label="صفحه بعدی"><i class="fas fa-chevron-left"></i></button>
+          <select class="page-size-select" id="pageSizeSelect" aria-label="تعداد روز در هر صفحه">
+            <option value="7" selected>۷ روز/صفحه</option>
+            <option value="14">۱۴ روز/صفحه</option>
+            <option value="30">۳۰ روز/صفحه</option>
+          </select>
+        </div>
+
+        <!-- نمای جدولی -->
+        <div id="tableView" role="tabpanel" aria-labelledby="tabTable">
+          <div class="table-wrapper">
+            <table id="scheduleTable" aria-label="برنامه مطالعه">
+              <thead>
+                <tr>
+                  <th scope="col">روز</th>
+                  <th scope="col">زمان</th>
+                  <th scope="col">درس</th>
+                  <th scope="col">مدت زمان</th>
+                  <th scope="col">یادداشت</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- نمای تقویمی -->
+        <div id="calendarView" style="display:none" role="tabpanel" aria-labelledby="tabCalendar">
+          <div class="calendar-nav">
+            <button id="prevMonth" aria-label="ماه قبلی"><i class="fas fa-chevron-right"></i></button>
+            <span class="month-label" id="calMonthLabel"></span>
+            <button id="nextMonth" aria-label="ماه بعدی"><i class="fas fa-chevron-left"></i></button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid" role="grid"></div>
+        </div>
+      </div>
+
+      <!-- نوار خروجی -->
+      <div class="export-bar">
+        <button class="export-btn" id="exportPrint"><i class="fas fa-print"></i> چاپ / PDF</button>
+        <button class="export-btn" id="exportPNG"><i class="fas fa-image"></i> خروجی PNG</button>
+        <button class="export-btn" id="exportCopy"><i class="fas fa-copy"></i> کپی برنامه</button>
+        <button class="export-btn danger" id="resetBtn"><i class="fas fa-trash-alt"></i> بازنشانی</button>
+      </div>
+    </section>
+
+    <!-- ============ بخش آمار ============ -->
+    <section id="statsSection" style="display:none" class="card" aria-label="آمار برنامه">
+      <h2 style="margin-bottom:16px;font-size:18px;">آمار</h2>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="chart-section">
+        <h3>ساعات هر درس</h3>
+        <canvas id="barChart" class="chart-canvas" height="220"></canvas>
+      </div>
+      <div class="chart-section">
+        <h3>توزیع دروس</h3>
+        <canvas id="pieChart" class="chart-canvas" height="260"></canvas>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- کانتینر تست -->
+<div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ====================== نقل‌قول‌های انگیزشی ====================== */
+  const QUOTES = [
+    "رمز موفقیت این است که شروع کنی. — مارک تواین",
+    "مهم نیست چقدر آهسته می‌روی، مهم این است که متوقف نشوی. — کنفوسیوس",
+    "موفقیت حاصل تلاش‌های کوچکی است که روزانه تکرار می‌شود. — رابرت کولیر",
+    "تنها راه انجام کار بزرگ، عشق به آن چیزی است که انجام می‌دهی. — استیو جابز",
+    "به ساعت نگاه نکن؛ آنچه ساعت می‌کند را انجام بده. ادامه بده. — سم لوونسون",
+    "آموزش پر کردن سطل نیست، بلکه روشن کردن آتش است. — ویلیام باتلر ییتس",
+    "با شدیدترین و غیرمتعارف‌ترین روش ممکن به چیزی که بیشتر علاقه‌مندید بپردازید. — ریچارد فاینمن",
+    "چیز زیبای یادگیری این است که هیچ‌کس نمی‌تواند آن را از تو بگیرد. — بی. بی. کینگ",
+    "سرمایه‌گذاری در دانش، بهترین سود را دارد. — بنجامین فرانکلین",
+    "هرچه بیشتر بخوانی، بیشتر می‌دانی. — دکتر سوس",
+    "خودت را هل بده، چون هیچ‌کس دیگری این کار را برایت نخواهد کرد.",
+    "چیزهای بزرگ هرگز از خارج از منطقه راحتی بیرون نمی‌آیند.",
+    "آن را آرزو کن. بخواهش. انجامش بده.",
+    "انضباط پلی بین اهداف و دستاورد است. — جیم ران",
+    "کمی پیشرفت هر روز، به نتایج بزرگی منجر می‌شود.",
+    "مطالعه بدون فکر کردن بی‌فایده است و فکر کردن بدون مطالعه خطرناک. — کنفوسیوس",
+    "تنها سرمایه‌گذاری که هرگز شکست نمی‌خورد، سرمایه‌گذاری در دانش است.",
+    "امروز کاری کن که فردایت به تو افتخار کند."
+  ];
+
+  /* ====================== رنگ دروس ====================== */
+  const PALETTE = [
+    '#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c',
+    '#3498db','#9b59b6','#e84393','#00b894','#0984e3',
+    '#6c5ce7','#fd79a8','#00cec9','#d63031','#e17055',
+    '#6ab04c','#eb4d4b','#f0932b','#7ed6df','#22a6b3'
+  ];
+
+  function getSubjectColor(index) {
+    if (index < PALETTE.length) return PALETTE[index];
+    const hue = (index * 137.508) % 360;
+    return `hsl(${hue}, 60%, 50%)`;
+  }
+
+  /* ====================== وضعیت اپلیکیشن ====================== */
+  let subjects = [];
+  let schedule = [];
+  let subjectColors = {};
+  let currentPage = 0;
+  let pageSize = 7;
+  let currentView = 'table';
+  let calMonth = 0;
+  let undoStack = [];
+  let redoStack = [];
+  const MAX_HISTORY = 50;
+  let subjectIdCounter = 0;
+
+  /* ====================== ارجاعات DOM ====================== */
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  const DOM = {
+    loader: $('#loader'),
+    app: $('#app'),
+    themeToggle: $('#themeToggle'),
+    undoBtn: $('#undoBtn'),
+    redoBtn: $('#redoBtn'),
+    quoteText: $('#quoteText'),
+    inputToggle: $('#inputToggle'),
+    inputBody: $('#inputBody'),
+    studyDays: $('#studyDays'),
+    searchSubjects: $('#searchSubjects'),
+    subjectsList: $('#subjectsList'),
+    addSubjectBtn: $('#addSubjectBtn'),
+    difficulty: $('#difficulty'),
+    diffLabels: $('#diffLabels'),
+    diffDisplay: $('#diffDisplay'),
+    dailyHours: $('#dailyHours'),
+    dailyHoursVal: $('#dailyHoursVal'),
+    sessionLength: $('#sessionLength'),
+    breakLength: $('#breakLength'),
+    startTime: $('#startTime'),
+    generateBtn: $('#generateBtn'),
+    scheduleSection: $('#scheduleSection'),
+    statsSection: $('#statsSection'),
+    tabTable: $('#tabTable'),
+    tabCalendar: $('#tabCalendar'),
+    tableView: $('#tableView'),
+    calendarView: $('#calendarView'),
+    scheduleBody: $('#scheduleBody'),
+    pageInfo: $('#pageInfo'),
+    prevPage: $('#prevPage'),
+    nextPage: $('#nextPage'),
+    pageSizeSelect: $('#pageSizeSelect'),
+    progressFill: $('#progressFill'),
+    progressText: $('#progressText'),
+    calendarGrid: $('#calendarGrid'),
+    calMonthLabel: $('#calMonthLabel'),
+    prevMonth: $('#prevMonth'),
+    nextMonth: $('#nextMonth'),
+    calDayDetail: $('#calDayDetail'),
+    statsGrid: $('#statsGrid'),
+    barChart: $('#barChart'),
+    pieChart: $('#pieChart'),
+    toastContainer: $('#toastContainer'),
+    confettiCanvas: $('#confettiCanvas'),
+    exportPrint: $('#exportPrint'),
+    exportPNG: $('#exportPNG'),
+    exportCopy: $('#exportCopy'),
+    resetBtn: $('#resetBtn')
+  };
+
+  /* ====================== ابزارها ====================== */
+  function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+  function isNumeric(v) { return !isNaN(parseFloat(v)) && isFinite(v); }
+  function formatDuration(minutes) {
+    if (minutes < 60) return `${minutes} دقیقه`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h} ساعت ${m} دقیقه` : `${h} ساعت`;
+  }
+  function addMinutes(timeStr, mins) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const total = h * 60 + m + mins;
+    const nh = Math.floor(total / 60) % 24;
+    const nm = total % 60;
+    return `${String(nh).padStart(2,'0')}:${String(nm).padStart(2,'0')}`;
+  }
+  function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+  const DIFFICULTY_NAMES = ['آسان','معمولی','سخت','بسیار سخت'];
+
+  /* ====================== تست ====================== */
+  function showToast(message, type = 'info') {
+    const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}" aria-hidden="true"></i><span>${escapeHtml(message)}</span>`;
+    DOM.toastContainer.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  /* ====================== تم ====================== */
+  function initTheme() {
+    const saved = localStorage.getItem('sf_theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon();
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sf_theme', next);
+    updateThemeIcon();
+  }
+  function updateThemeIcon() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    DOM.themeToggle.innerHTML = isDark
+      ? '<i class="fas fa-sun"></i>'
+      : '<i class="fas fa-moon"></i>';
+  }
+
+  /* ====================== نقل‌قول ====================== */
+  function showRandomQuote() {
+    DOM.quoteText.textContent = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  }
+
+  /* ====================== بخش‌های تاشو ====================== */
+  function toggleSection(toggle, body) {
+    const isOpen = toggle.classList.contains('open');
+    toggle.classList.toggle('open', !isOpen);
+    body.classList.toggle('open', !isOpen);
+    toggle.setAttribute('aria-expanded', !isOpen);
+  }
+
+  /* ====================== مدیریت دروس ====================== */
+  function createSubject(name = '', priority = 3, credits = 3, hours = 5) {
+    return { id: ++subjectIdCounter, name, priority: Number(priority), credits: Number(credits), hours: Number(hours) };
+  }
+
+  function addSubject() {
+    subjects.push(createSubject());
+    renderSubjects();
+    const rows = DOM.subjectsList.querySelectorAll('.subject-row');
+    const last = rows[rows.length - 1];
+    if (last) {
+      const nameInput = last.querySelector('.subject-name');
+      if (nameInput) nameInput.focus();
+    }
+  }
+
+  function removeSubject(id) {
+    if (subjects.length <= 0) return;
+    subjects = subjects.filter(s => s.id !== id);
+    renderSubjects();
+  }
+
+  function renderSubjects(filter = '') {
+    const lowerFilter = filter.toLowerCase();
+    DOM.subjectsList.innerHTML = '';
+
+    const filtered = filter
+      ? subjects.filter(s => s.name.toLowerCase().includes(lowerFilter))
+      : subjects;
+
+    if (subjects.length === 0) {
+      DOM.subjectsList.innerHTML = '<div class="empty-subjects"><i class="fas fa-book-open" style="font-size:24px;display:block;margin-bottom:8px;"></i>هنوز درسی اضافه نشده. روی «افزودن درس» کلیک کنید.</div>';
+      return;
+    }
+
+    if (filtered.length === 0) {
+      DOM.subjectsList.innerHTML = '<div class="empty-subjects">درسی با جستجوی شما مطابقت ندارد.</div>';
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    filtered.forEach((subj, idx) => {
+      const globalIdx = subjects.indexOf(subj);
+      const color = getSubjectColor(globalIdx);
+      const row = document.createElement('div');
+      row.className = 'subject-row';
+      row.setAttribute('role', 'listitem');
+      row.setAttribute('draggable', 'true');
+      row.dataset.id = subj.id;
+      row.style.animationDelay = `${idx * 0.03}s`;
+
+      row.innerHTML = `
+        <div class="drag-handle" title="بکشید برای تغییر ترتیب" aria-label="بکشید برای تغییر ترتیب"><i class="fas fa-grip-vertical"></i></div>
+        <div class="subject-name-wrap">
+          <input type="text" class="subject-name" value="${escapeHtml(subj.name)}" placeholder="نام درس" aria-label="نام درس">
+          <span class="subject-color-dot" style="background:${color}"></span>
+        </div>
+        <select class="subject-priority" aria-label="اولویت">
+          <option value="1"${subj.priority===1?' selected':''}>۱ (بالاترین اولویت)</option>
+          <option value="2"${subj.priority===2?' selected':''}>۲</option>
+          <option value="3"${subj.priority===3?' selected':''}>۳</option>
+          <option value="4"${subj.priority===4?' selected':''}>۴</option>
+          <option value="5"${subj.priority===5?' selected':''}>۵ (پایین ترین اولویت)</option>
+        </select>
+        <input type="number" class="subject-credits" value="${subj.credits}" min="1" step="1" placeholder="واحد" aria-label="تعداد واحد">
+        <input type="number" class="subject-hours" value="${subj.hours}" min="0.5" step="0.5" placeholder="ساعت" aria-label="ساعات تخمینی">
+        <button class="delete-btn" title="حذف درس" aria-label="حذف ${escapeHtml(subj.name) || 'درس'}"><i class="fas fa-times"></i></button>
+      `;
+      frag.appendChild(row);
+    });
+    DOM.subjectsList.appendChild(frag);
+    bindSubjectEvents();
+  }
+
+  function bindSubjectEvents() {
+    DOM.subjectsList.querySelectorAll('.subject-row').forEach(row => {
+      const id = Number(row.dataset.id);
+      const subj = subjects.find(s => s.id === id);
+      if (!subj) return;
+
+      row.querySelector('.subject-name').addEventListener('input', (e) => {
+        subj.name = e.target.value;
+        clearValidation(row.querySelector('.subject-name'));
+      });
+      row.querySelector('.subject-priority').addEventListener('change', (e) => {
+        subj.priority = Number(e.target.value);
+      });
+      row.querySelector('.subject-credits').addEventListener('input', (e) => {
+        subj.credits = Number(e.target.value);
+        clearValidation(row.querySelector('.subject-credits'));
+      });
+      row.querySelector('.subject-hours').addEventListener('input', (e) => {
+        subj.hours = Number(e.target.value);
+        clearValidation(row.querySelector('.subject-hours'));
+      });
+      row.querySelector('.delete-btn').addEventListener('click', () => removeSubject(id));
+
+      // کشیدن و رها کردن
+      row.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', id);
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('dragging');
+        DOM.subjectsList.querySelectorAll('.subject-row').forEach(r => r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        row.classList.add('drag-over');
+      });
+      row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        const draggedId = Number(e.dataTransfer.getData('text/plain'));
+        const targetId = id;
+        if (draggedId === targetId) return;
+        const fromIdx = subjects.findIndex(s => s.id === draggedId);
+        const toIdx = subjects.findIndex(s => s.id === targetId);
+        if (fromIdx < 0 || toIdx < 0) return;
+        const [moved] = subjects.splice(fromIdx, 1);
+        subjects.splice(toIdx, 0, moved);
+        renderSubjects(DOM.searchSubjects.value);
+      });
+    });
+  }
+
+  function clearValidation(el) {
+    if (el) el.classList.remove('invalid');
+  }
+
+  /* ====================== اعتبارسنجی ====================== */
+  function showFieldError(inputEl, errEl, msg) {
+    if (inputEl) inputEl.classList.add('invalid');
+    if (errEl) {
+      errEl.querySelector('span').textContent = msg;
+      errEl.classList.add('show');
+    }
+  }
+  function clearFieldError(errEl) {
+    if (errEl) errEl.classList.remove('show');
+  }
+
+  function validateForm() {
+    let valid = true;
+    clearFieldError($('#studyDaysErr'));
+    clearFieldError($('#subjectsErr'));
+
+    const days = Number(DOM.studyDays.value);
+    if (!isNumeric(DOM.studyDays.value) || days < 1 || days > 365 || !Number.isInteger(days)) {
+      showFieldError(DOM.studyDays, $('#studyDaysErr'), 'عددی بین ۱ تا ۳۶۵ وارد کنید.');
+      valid = false;
+    }
+
+    if (subjects.length === 0) {
+      showFieldError(null, $('#subjectsErr'), 'حداقل یک درس اضافه کنید.');
+      valid = false;
+    } else {
+      const nameSet = new Set();
+      const rows = DOM.subjectsList.querySelectorAll('.subject-row');
+      subjects.forEach((subj, i) => {
+        const row = rows[i];
+        if (!row) return;
+        const nameInput = row.querySelector('.subject-name');
+        const creditsInput = row.querySelector('.subject-credits');
+        const hoursInput = row.querySelector('.subject-hours');
+
+        [nameInput, creditsInput, hoursInput].forEach(clearValidation);
+
+        if (!subj.name.trim()) {
+          showFieldError(nameInput, null, '');
+          if (valid) showFieldError(null, $('#subjectsErr'), `درس ${i+1} نیاز به نام دارد.`);
+          valid = false;
+        } else if (nameSet.has(subj.name.trim().toLowerCase())) {
+          showFieldError(nameInput, null, '');
+          if (valid) showFieldError(null, $('#subjectsErr'), `نام درس تکراری است: «${subj.name.trim()}»`);
+          valid = false;
+        }
+        nameSet.add(subj.name.trim().toLowerCase());
+
+        if (!isNumeric(subj.credits) || subj.credits < 1 || !Number.isInteger(subj.credits)) {
+          showFieldError(creditsInput, null, '');
+          if (valid) showFieldError(null, $('#subjectsErr'), `واحدهای «${subj.name || 'درس '+(i+1)}» باید عدد صحیح مثبت باشد.`);
+          valid = false;
+        }
+        if (!isNumeric(subj.hours) || subj.hours <= 0) {
+          showFieldError(hoursInput, null, '');
+          if (valid) showFieldError(null, $('#subjectsErr'), `ساعات «${subj.name || 'درس '+(i+1)}» باید عدد مثبت باشد.`);
+          valid = false;
+        }
+      });
+    }
+
+    const sessLen = Number(DOM.sessionLength.value);
+    const brkLen = Number(DOM.breakLength.value);
+    if (brkLen >= sessLen) {
+      showFieldError(null, $('#subjectsErr'), 'طول استراحت باید کمتر از طول جلسه باشد.');
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  /* ====================== الگوریتم برنامه‌ریزی ====================== */
+  function generateSchedule() {
+    const days = Number(DOM.studyDays.value);
+    const dailyHours = Number(DOM.dailyHours.value);
+    const sessionLen = Number(DOM.sessionLength.value);
+    const breakLen = Number(DOM.breakLength.value);
+    const startTime = DOM.startTime.value;
+    const diff = Number(DOM.difficulty.value);
+
+    // تنظیمات مبتنی بر سختی
+    const densityMap = [0.6, 0.78, 0.92, 1.0];
+    const breakMultMap = [1.5, 1.0, 0.8, 0.6];
+    const density = densityMap[diff - 1];
+    const breakMult = breakMultMap[diff - 1];
+    const effectiveBreak = Math.max(1, Math.round(breakLen * breakMult));
+
+    const dailyMinutes = Math.round(dailyHours * 60);
+    const maxSessions = Math.max(1, Math.floor(dailyMinutes / (sessionLen + effectiveBreak)));
+    const targetSessions = Math.max(1, Math.round(maxSessions * density));
+
+    // اختصاص رنگ به دروس
+    subjectColors = {};
+    subjects.forEach((s, i) => {
+      subjectColors[s.name.trim()] = getSubjectColor(i);
+    });
+
+    // محاسبه وزن‌ها
+    const totalHours = subjects.reduce((sum, s) => sum + s.hours, 0);
+    const maxCredits = Math.max(1, ...subjects.map(s => s.credits));
+
+    const weighted = subjects.map(s => {
+      const prioW = 6 - s.priority;
+      const credW = s.credits / maxCredits;
+      const hourW = totalHours > 0 ? s.hours / totalHours : 0;
+      const weight = prioW * 0.5 + credW * 0.25 + hourW * 0.25;
+      const totalSessions = Math.max(1, Math.round(s.hours / (sessionLen / 60)));
+      return { ...s, weight, totalSessions, remaining: totalSessions, name: s.name.trim() };
+    });
+
+    const totalWeight = weighted.reduce((s, w) => s + w.weight, 0) || 1;
+
+    const totalAvailable = days * targetSessions;
+    const totalNeeded = weighted.reduce((s, w) => s + w.totalSessions, 0);
+
+    let scaleFactor = 1;
+    if (totalNeeded > totalAvailable) {
+      scaleFactor = totalAvailable / totalNeeded;
+      weighted.forEach(w => {
+        w.totalSessions = Math.max(1, Math.round(w.totalSessions * scaleFactor));
+        w.remaining = w.totalSessions;
+      });
+    }
+
+    if (totalNeeded < totalAvailable) {
+      const extra = totalAvailable - totalNeeded;
+      let distributed = 0;
+      const sorted = [...weighted].sort((a, b) => (b.weight / totalWeight) - (a.weight / totalWeight));
+      for (let i = 0; distributed < extra; i = (i + 1) % sorted.length) {
+        sorted[i].totalSessions += 1;
+        sorted[i].remaining += 1;
+        distributed++;
+      }
+    }
+
+    // تولید برنامه روز به روز
+    schedule = [];
+    const lastSeen = [];
+    const MAX_CONSECUTIVE = 2;
+
+    for (let day = 1; day <= days; day++) {
+      const daySessions = [];
+      let currentMinutes = 0;
+      let currentTime = startTime;
+      let studyMinutesSoFar = 0;
+      let lunchInserted = false;
+      let sessionsPlaced = 0;
+      const dayTarget = Math.min(targetSessions, Math.floor((dailyMinutes - currentMinutes) / (sessionLen + effectiveBreak)));
+
+      while (sessionsPlaced < dayTarget && currentMinutes + sessionLen <= dailyMinutes) {
+        const subject = pickNextSubject(weighted, lastSeen, MAX_CONSECUTIVE, totalWeight);
+        if (!subject) break;
+
+        const endTime = addMinutes(currentTime, sessionLen);
+        daySessions.push({
+          type: 'study',
+          subject: subject.name,
+          duration: sessionLen,
+          startTime: currentTime,
+          endTime: endTime,
+          notes: ''
+        });
+        currentMinutes += sessionLen;
+        studyMinutesSoFar += sessionLen;
+        currentTime = endTime;
+        sessionsPlaced++;
+        subject.remaining--;
+
+        lastSeen.push(subject.name);
+        if (lastSeen.length > MAX_CONSECUTIVE * 2) lastSeen.shift();
+
+        const isLastSession = sessionsPlaced >= dayTarget || currentMinutes + sessionLen > dailyMinutes;
+        if (!isLastSession) {
+          const halfStudy = dailyMinutes * 0.45;
+          if (!lunchInserted && studyMinutesSoFar >= halfStudy) {
+            const lunchEnd = addMinutes(currentTime, 30);
+            daySessions.push({
+              type: 'lunch',
+              duration: 30,
+              startTime: currentTime,
+              endTime: lunchEnd,
+              notes: ''
+            });
+            currentMinutes += 30;
+            currentTime = lunchEnd;
+            lunchInserted = true;
+          } else {
+            const breakEnd = addMinutes(currentTime, effectiveBreak);
+            daySessions.push({
+              type: 'break',
+              duration: effectiveBreak,
+              startTime: currentTime,
+              endTime: breakEnd,
+              notes: ''
+            });
+            currentMinutes += effectiveBreak;
+            currentTime = breakEnd;
+          }
+        }
+      }
+
+      schedule.push({ day, sessions: daySessions });
+    }
+
+    recalculateDayTimes();
+  }
+
+  function pickNextSubject(weighted, lastSeen, maxConsec, totalWeight) {
+    const available = weighted.filter(w => w.remaining > 0);
+    if (available.length === 0) return null;
+
+    const recent = lastSeen.slice(-maxConsec);
+    const nonRecent = available.filter(w => !recent.includes(w.name));
+    const pool = nonRecent.length > 0 ? nonRecent : available;
+
+    let best = null;
+    let bestScore = -Infinity;
+    for (const subj of pool) {
+      const normalizedW = (subj.weight / totalWeight);
+      const urgency = subj.remaining / Math.max(1, subj.totalSessions);
+      const score = normalizedW * 0.6 + urgency * 0.4;
+      if (score > bestScore) {
+        bestScore = score;
+        best = subj;
+      }
+    }
+    return best;
+  }
+
+  function recalculateDayTimes() {
+    const startTime = DOM.startTime.value;
+    schedule.forEach(day => {
+      let currentTime = startTime;
+      day.sessions.forEach(session => {
+        session.startTime = currentTime;
+        session.endTime = addMinutes(currentTime, session.duration);
+        currentTime = session.endTime;
+      });
+    });
+  }
+
+  /* ====================== رندر جدول ====================== */
+  function renderTable() {
+    const frag = document.createDocumentFragment();
+    const start = currentPage * pageSize;
+    const end = Math.min(start + pageSize, schedule.length);
+
+    for (let i = start; i < end; i++) {
+      const day = schedule[i];
+      day.sessions.forEach((session, si) => {
+        const tr = document.createElement('tr');
+        tr.dataset.day = day.day;
+        tr.dataset.session = si;
+
+        if (session.type === 'break') {
+          tr.className = 'row-break';
+          tr.innerHTML = `
+            ${si === 0 ? `<td class="day-cell" rowspan="${day.sessions.length}">روز ${day.day}</td>` : ''}
+            <td class="time-cell">${session.startTime} - ${session.endTime}</td>
+            <td><i class="fas fa-coffee" style="margin-left:6px;color:var(--break-fg)"></i>استراحت</td>
+            <td class="duration-cell">${formatDuration(session.duration)}</td>
+            <td class="notes-cell"></td>
+          `;
+        } else if (session.type === 'lunch') {
+          tr.className = 'row-lunch';
+          tr.innerHTML = `
+            ${si === 0 ? `<td class="day-cell" rowspan="${day.sessions.length}">روز ${day.day}</td>` : ''}
+            <td class="time-cell">${session.startTime} - ${session.endTime}</td>
+            <td><i class="fas fa-utensils" style="margin-left:6px;color:var(--lunch-fg)"></i>استراحت ناهار</td>
+            <td class="duration-cell">${formatDuration(session.duration)}</td>
+            <td class="notes-cell"></td>
+          `;
+        } else {
+          const color = subjectColors[session.subject] || '#888';
+          const bgLight = color + '18';
+          tr.innerHTML = `
+            ${si === 0 ? `<td class="day-cell" rowspan="${day.sessions.length}">روز ${day.day}</td>` : ''}
+            <td class="time-cell editable" data-field="startTime" data-day="${day.day}" data-si="${si}">${session.startTime} - ${session.endTime}</td>
+            <td>
+              <span class="subject-badge editable" data-field="subject" data-day="${day.day}" data-si="${si}" style="background:${bgLight};color:${color}">
+                ${escapeHtml(session.subject)}
+                <span class="subject-color-dot" style="background:${color}"></span>
+              </span>
+            </td>
+            <td class="duration-cell editable" data-field="duration" data-day="${day.day}" data-si="${si}">${formatDuration(session.duration)}</td>
+            <td class="notes-cell editable" data-field="notes" data-day="${day.day}" data-si="${si}">${escapeHtml(session.notes || '')}</td>
+          `;
+        }
+        frag.appendChild(tr);
+      });
+    }
+
+    DOM.scheduleBody.innerHTML = '';
+    DOM.scheduleBody.appendChild(frag);
+
+    DOM.pageInfo.textContent = schedule.length > 0
+      ? `روز ${start + 1} تا ${end} از ${schedule.length}`
+      : 'بدون برنامه';
+    DOM.prevPage.disabled = currentPage <= 0;
+    DOM.nextPage.disabled = end >= schedule.length;
+
+    bindEditableCells();
+  }
+
+  /* ====================== ویرایش درون‌خطی ====================== */
+  function bindEditableCells() {
+    DOM.scheduleBody.querySelectorAll('.editable').forEach(cell => {
+      cell.addEventListener('click', handleCellClick);
+    });
+  }
+
+  function handleCellClick(e) {
+    const cell = e.currentTarget;
+    if (cell.querySelector('.edit-input')) return;
+
+    const field = cell.dataset.field;
+    const dayIdx = Number(cell.dataset.day) - 1;
+    const si = Number(cell.dataset.si);
+    const session = schedule[dayIdx]?.sessions[si];
+    if (!session) return;
+
+    pushHistory();
+
+    if (field === 'subject') {
+      const select = document.createElement('select');
+      select.className = 'edit-input';
+      subjects.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name.trim();
+        opt.textContent = s.name.trim();
+        if (s.name.trim() === session.subject) opt.selected = true;
+        select.appendChild(opt);
+      });
+      cell.innerHTML = '';
+      cell.appendChild(select);
+      select.focus();
+
+      const save = () => {
+        session.subject = select.value;
+        recalculateDayTimes();
+        renderTable();
+        renderStats();
+        showToast('درس بروزرسانی شد', 'success');
+      };
+      select.addEventListener('change', save);
+      select.addEventListener('blur', save);
+
+    } else if (field === 'duration') {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'edit-input';
+      input.value = session.duration;
+      input.min = 5;
+      input.max = 180;
+      input.step = 5;
+      cell.textContent = '';
+      cell.appendChild(input);
+      input.focus();
+      input.select();
+
+      const save = () => {
+        const val = Number(input.value);
+        if (isNumeric(val) && val >= 5 && val <= 180) {
+          session.duration = val;
+          recalculateDayTimes();
+          renderTable();
+          renderStats();
+          showToast('مدت زمان بروزرسانی شد', 'success');
+        } else {
+          renderTable();
+          showToast('مدت زمان نامعتبر (۵ تا ۱۸۰ دقیقه)', 'error');
+        }
+      };
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') save(); if (ev.key === 'Escape') renderTable(); });
+
+    } else if (field === 'notes') {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'edit-input';
+      input.value = session.notes || '';
+      input.placeholder = 'افزودن یادداشت...';
+      cell.textContent = '';
+      cell.appendChild(input);
+      input.focus();
+
+      const save = () => {
+        session.notes = input.value.trim();
+        renderTable();
+      };
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') save(); if (ev.key === 'Escape') renderTable(); });
+
+    } else if (field === 'startTime') {
+      const input = document.createElement('input');
+      input.type = 'time';
+      input.className = 'edit-input';
+      input.value = session.startTime;
+      cell.textContent = '';
+      cell.appendChild(input);
+      input.focus();
+
+      const save = () => {
+        if (input.value) {
+          session.startTime = input.value;
+          session.endTime = addMinutes(input.value, session.duration);
+          let nextTime = session.endTime;
+          for (let j = si + 1; j < schedule[dayIdx].sessions.length; j++) {
+            const next = schedule[dayIdx].sessions[j];
+            next.startTime = nextTime;
+            next.endTime = addMinutes(nextTime, next.duration);
+            nextTime = next.endTime;
+          }
+          renderTable();
+          showToast('زمان شروع بروزرسانی شد', 'success');
+        } else {
+          renderTable();
+        }
+      };
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') save(); if (ev.key === 'Escape') renderTable(); });
+    }
+  }
+
+  /* ====================== نمای تقویمی ====================== */
+  function renderCalendar() {
+    if (schedule.length === 0) return;
+
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+
+    const displayDate = new Date(startDate);
+    displayDate.setMonth(displayDate.getMonth() + calMonth);
+
+    const year = displayDate.getFullYear();
+    const month = displayDate.getMonth();
+
+    // روز شروع ماه (شنبه = ۶ در سیستم جاوااسکریپت، تبدیل به ۰)
+    const jsDay = new Date(year, month, 1).getDay();
+    const firstDaySatFirst = (jsDay + 1) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // نام ماه به فارسی
+    const persianMonths = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','جولای','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];
+    DOM.calMonthLabel.textContent = `${persianMonths[month]} ${year}`;
+
+    // نام روزهای هفته (شنبه تا جمعه)
+    const dayNames = ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'];
+    let html = dayNames.map(d => `<div class="cal-header">${d}</div>`).join('');
+
+    for (let i = 0; i < firstDaySatFirst; i++) {
+      html += '<div class="cal-day empty"></div>';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      const diffDays = Math.floor((date - startDate) / (1000 * 60 * 60 * 24));
+      const isToday = date.getTime() === today.getTime();
+
+      const dayData = schedule[diffDays];
+      let sessionsHtml = '';
+      let hasStudy = false;
+
+      if (dayData && dayData.sessions) {
+        const studySessions = dayData.sessions.filter(s => s.type === 'study');
+        if (studySessions.length > 0) {
+          hasStudy = true;
+          const subjectMap = {};
+          studySessions.forEach(s => {
+            subjectMap[s.subject] = (subjectMap[s.subject] || 0) + s.duration;
+          });
+          for (const [name, mins] of Object.entries(subjectMap)) {
+            const color = subjectColors[name] || '#888';
+            sessionsHtml += `<div class="cal-session" style="background:${color}" title="${escapeHtml(name)}: ${formatDuration(mins)}"></div>`;
+          }
+        }
+      }
+
+      const classes = ['cal-day'];
+      if (isToday) classes.push('today');
+      if (!hasStudy && diffDays >= 0 && diffDays < schedule.length) classes.push('no-study');
+
+      html += `<div class="${classes.join(' ')}" data-date="${year}-${month}-${d}" data-diff="${diffDays}">
+        <div class="day-num">${d}</div>
+        ${sessionsHtml}
+      </div>`;
+    }
+
+    DOM.calendarGrid.innerHTML = html;
+
+    DOM.calendarGrid.querySelectorAll('.cal-day:not(.empty)').forEach(cell => {
+      cell.addEventListener('mouseenter', showCalDetail);
+      cell.addEventListener('mouseleave', hideCalDetail);
+    });
+  }
+
+  function showCalDetail(e) {
+    const cell = e.currentTarget;
+    const diffDays = Number(cell.dataset.diff);
+    if (diffDays < 0 || diffDays >= schedule.length) return;
+
+    const dayData = schedule[diffDays];
+    if (!dayData || !dayData.sessions.length) return;
+
+    const rect = cell.getBoundingClientRect();
+    const detail = DOM.calDayDetail;
+    let html = `<h4>برنامه روز ${dayData.day}</h4>`;
+    dayData.sessions.forEach(s => {
+      if (s.type === 'study') {
+        const color = subjectColors[s.subject] || '#888';
+        html += `<div class="cal-detail-item">
+          <span class="subject-color-dot" style="background:${color}"></span>
+          <strong>${escapeHtml(s.subject)}</strong>
+          <span class="time-part">${s.startTime}-${s.endTime}</span>
+        </div>`;
+      } else if (s.type === 'lunch') {
+        html += `<div class="cal-detail-item" style="color:var(--lunch-fg)"><i class="fas fa-utensils" style="width:10px"></i> ناهار <span class="time-part">${s.startTime}-${s.endTime}</span></div>`;
+      } else {
+        html += `<div class="cal-detail-item" style="color:var(--break-fg)"><i class="fas fa-coffee" style="width:10px"></i> استراحت <span class="time-part">${s.startTime}-${s.endTime}</span></div>`;
+      }
+    });
+    detail.innerHTML = html;
+    detail.classList.add('show');
+
+    let top = rect.bottom + 8;
+    let left = rect.right - 240;
+    if (top + 200 > window.innerHeight) top = rect.top - 200;
+    if (left < 8) left = 8;
+    detail.style.top = top + 'px';
+    detail.style.left = left + 'px';
+  }
+
+  function hideCalDetail() {
+    DOM.calDayDetail.classList.remove('show');
+  }
+
+  /* ====================== آمار ====================== */
+  function renderStats() {
+    let totalStudyMin = 0;
+    let totalBreakMin = 0;
+    const subjectHours = {};
+
+    schedule.forEach(day => {
+      day.sessions.forEach(s => {
+        if (s.type === 'study') {
+          totalStudyMin += s.duration;
+          subjectHours[s.subject] = (subjectHours[s.subject] || 0) + s.duration;
+        } else {
+          totalBreakMin += s.duration;
+        }
+      });
+    });
+
+    const totalStudyH = (totalStudyMin / 60).toFixed(1);
+    const totalBreakH = (totalBreakMin / 60).toFixed(1);
+    const days = schedule.length || 1;
+    const avgDaily = (totalStudyMin / days / 60).toFixed(1);
+    const dailyH = Number(DOM.dailyHours.value);
+    const freeTime = Math.max(0, (dailyH * days - totalStudyMin / 60)).toFixed(1);
+
+    let estimatedTotal = 0;
+    let allocatedTotal = 0;
+    subjects.forEach(s => {
+      estimatedTotal += s.hours;
+      const allocated = (subjectHours[s.name.trim()] || 0) / 60;
+      allocatedTotal += allocated;
+    });
+    const completion = estimatedTotal > 0 ? Math.min(100, (allocatedTotal / estimatedTotal) * 100) : 0;
+
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const elapsed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+    const progress = clamp(Math.round((elapsed / days) * 100), 0, 100);
+    DOM.progressFill.style.width = progress + '%';
+    DOM.progressText.textContent = progress + '%';
+
+    DOM.statsGrid.innerHTML = `
+      <div class="stat-card"><div class="stat-label">کل ساعات مطالعه</div><div class="stat-value accent">${totalStudyH}</div></div>
+      <div class="stat-card"><div class="stat-label">کل زمان استراحت</div><div class="stat-value">${totalBreakH}</div></div>
+      <div class="stat-card"><div class="stat-label">میانگین روزانه</div><div class="stat-value">${avgDaily}</div></div>
+      <div class="stat-card"><div class="stat-label">زمان آزاد</div><div class="stat-value">${freeTime}</div></div>
+      <div class="stat-card"><div class="stat-label">درصد تکمیل</div><div class="stat-value accent">${completion.toFixed(0)}%</div></div>
+    `;
+
+    drawBarChart(subjectHours);
+    drawPieChart(subjectHours, totalStudyMin);
+  }
+
+  /* ====================== نمودارهای بوم ====================== */
+  function drawBarChart(subjectHours) {
+    const canvas = DOM.barChart;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 220 * dpr;
+    canvas.style.height = '220px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const w = rect.width;
+    const h = 220;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const entries = Object.entries(subjectHours).sort((a, b) => b[1] - a[1]);
+    if (entries.length === 0) return;
+
+    const maxMin = Math.max(1, ...entries.map(e => e[1]));
+    const barHeight = Math.min(28, Math.max(12, (h - 20) / entries.length - 6));
+    const labelWidth = Math.min(120, w * 0.3);
+    const barMaxWidth = w - labelWidth - 60;
+    const startY = 10;
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#94a3b8' : '#4a4a5a';
+    const mutedColor = isDark ? '#475569' : '#cbd5e1';
+
+    entries.forEach(([name, mins], i) => {
+      const y = startY + i * (barHeight + 6);
+      const barW = Math.max(2, (mins / maxMin) * barMaxWidth);
+      const color = subjectColors[name] || '#888';
+
+      // برچسب (سمت راست در RTL)
+      ctx.fillStyle = textColor;
+      ctx.font = '500 12px "Vazirmatn", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const displayName = name.length > 14 ? name.slice(0, 13) + '...' : name;
+      ctx.fillText(displayName, w - 10, y + barHeight / 2);
+
+      // پس‌زمینه میله
+      const barX = w - labelWidth - 10;
+      ctx.fillStyle = mutedColor;
+      ctx.beginPath();
+      ctx.roundRect(barX - barMaxWidth, y, barMaxWidth, barHeight, 4);
+      ctx.fill();
+
+      // پر کردن میله (از راست به چپ)
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(barX - barW, y, barW, barHeight, 4);
+      ctx.fill();
+
+      // مقدار
+      ctx.fillStyle = textColor;
+      ctx.font = '600 11px "Vazirmatn", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${(mins / 60).toFixed(1)}h`, barX - barW - 8, y + barHeight / 2);
+    });
+  }
+
+  function drawPieChart(subjectHours, totalMin) {
+    const canvas = DOM.pieChart;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 260 * dpr;
+    canvas.style.height = '260px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const w = rect.width;
+    const h = 260;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const entries = Object.entries(subjectHours).sort((a, b) => b[1] - a[1]);
+    if (entries.length === 0 || totalMin === 0) return;
+
+    // دونات در سمت راست (RTL)
+    const cx = w - Math.min(130, w * 0.3);
+    const cy = h / 2;
+    const radius = Math.min(100, w - cx - 20, cy - 20);
+    const innerRadius = radius * 0.55;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#e2e8f0' : '#1a1a2e';
+    const mutedColor = isDark ? '#64748b' : '#8a8a9a';
+
+    let startAngle = -Math.PI / 2;
+    entries.forEach(([name, mins]) => {
+      const sliceAngle = (mins / totalMin) * Math.PI * 2;
+      const endAngle = startAngle + sliceAngle;
+      const color = subjectColors[name] || '#888';
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, startAngle, endAngle);
+      ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      startAngle = endAngle;
+    });
+
+    ctx.fillStyle = textColor;
+    ctx.font = '700 20px "Vazirmatn", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${(totalMin / 60).toFixed(1)}h`, cx, cy - 6);
+    ctx.font = '400 11px "Vazirmatn", sans-serif';
+    ctx.fillStyle = mutedColor;
+    ctx.fillText('مجموع', cx, cy + 14);
+
+    // راهنما در سمت چپ (RTL)
+    const legendX = 10;
+    const legendY = 20;
+    const lineH = Math.min(24, Math.max(16, (h - 40) / entries.length));
+
+    entries.forEach(([name, mins], i) => {
+      const y = legendY + i * lineH;
+      const color = subjectColors[name] || '#888';
+      const pct = ((mins / totalMin) * 100).toFixed(0);
+
+      ctx.beginPath();
+      ctx.arc(legendX + 5, y + lineH / 2 - 2, 5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      ctx.fillStyle = textColor;
+      ctx.font = '500 12px "Vazirmatn", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const displayName = name.length > 18 ? name.slice(0, 17) + '...' : name;
+      ctx.fillText(displayName, cx - radius - 30, y + lineH / 2 - 2);
+
+      ctx.fillStyle = mutedColor;
+      ctx.font = '600 11px "Vazirmatn", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${pct}%`, legendX + 16, y + lineH / 2 - 2);
+    });
+  }
+
+  /* ====================== برگردان / دوباره ====================== */
+  function pushHistory() {
+    undoStack.push(deepClone(schedule));
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    redoStack.push(deepClone(schedule));
+    schedule = undoStack.pop();
+    renderTable();
+    renderStats();
+    if (currentView === 'calendar') renderCalendar();
+    updateUndoRedoButtons();
+    showToast('برگردانده شد', 'info');
+  }
+
+  function redo() {
+    if (redoStack.length === 0) return;
+    undoStack.push(deepClone(schedule));
+    schedule = redoStack.pop();
+    renderTable();
+    renderStats();
+    if (currentView === 'calendar') renderCalendar();
+    updateUndoRedoButtons();
+    showToast('انجام دوباره', 'info');
+  }
+
+  function updateUndoRedoButtons() {
+    DOM.undoBtn.disabled = undoStack.length === 0;
+    DOM.redoBtn.disabled = redoStack.length === 0;
+  }
+
+  /* ====================== خروجی ====================== */
+  function printSchedule() {
+    window.print();
+  }
+
+  function exportPNG() {
+    const canvas = document.createElement('canvas');
+    const dpr = 2;
+    const padding = 40;
+    const lineHeight = 28;
+    const headerHeight = 80;
+
+    let totalRows = 0;
+    schedule.forEach(day => { totalRows += day.sessions.length + 1; });
+    const width = 900;
+    const height = headerHeight + totalRows * lineHeight + padding * 2;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = '700 22px "Vazirmatn", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('استادی‌فلو — برنامه مطالعه', width - padding, padding + 24);
+
+    ctx.fillStyle = '#8a8a9a';
+    ctx.font = '400 12px "Vazirmatn", sans-serif';
+    ctx.fillText(`${schedule.length} روز | تولید شده با استادی‌فلو`, width - padding, padding + 48);
+
+    let y = headerHeight + padding;
+    const colWidths = [160, 80, 260, 140, 60];
+    const headers = ['یادداشت', 'مدت زمان', 'درس', 'زمان', 'روز'];
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(padding - 4, y - 8, width - padding * 2 + 8, 28);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 11px "Vazirmatn", sans-serif';
+    let x = width - padding;
+    headers.forEach((h, i) => {
+      ctx.textAlign = 'right';
+      ctx.fillText(h, x, y + 6);
+      x -= colWidths[i];
+    });
+    y += 28;
+
+    schedule.forEach(day => {
+      day.sessions.forEach(s => {
+        if (s === day.sessions[0]) {
+          ctx.fillStyle = '#0d7377';
+          ctx.font = '700 12px "Vazirmatn", sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(`روز ${day.day}`, width - padding, y + 6);
+        }
+
+        x = width - padding - colWidths[0];
+        if (s.type === 'break') {
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(padding - 4, y - 4, width - padding * 2 + 8, lineHeight - 4);
+          ctx.fillStyle = '#64748b';
+          ctx.font = 'italic 12px "Vazirmatn", sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(formatDuration(s.duration), x, y + 6);
+          x -= colWidths[1];
+          ctx.fillText('استراحت', x, y + 6);
+          x -= colWidths[2];
+          ctx.fillText(`${s.startTime} - ${s.endTime}`, x, y + 6);
+        } else if (s.type === 'lunch') {
+          ctx.fillStyle = '#fef3c7';
+          ctx.fillRect(padding - 4, y - 4, width - padding * 2 + 8, lineHeight - 4);
+          ctx.fillStyle = '#92400e';
+          ctx.font = '600 12px "Vazirmatn", sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(formatDuration(s.duration), x, y + 6);
+          x -= colWidths[1];
+          ctx.fillText('استراحت ناهار', x, y + 6);
+          x -= colWidths[2];
+          ctx.fillText(`${s.startTime} - ${s.endTime}`, x, y + 6);
+        } else {
+          const color = subjectColors[s.subject] || '#888';
+          ctx.fillStyle = '#4a4a5a';
+          ctx.font = '400 12px "Vazirmatn", sans-serif';
+          ctx.textAlign = 'right';
+          if (s.notes) {
+            ctx.fillStyle = '#8a8a9a';
+            ctx.fillText(s.notes, x, y + 6);
+          }
+          x -= colWidths[1];
+          ctx.fillStyle = '#4a4a5a';
+          ctx.fillText(formatDuration(s.duration), x, y + 6);
+          x -= colWidths[2];
+          ctx.fillStyle = color;
+          ctx.font = '600 12px "Vazirmatn", sans-serif';
+          ctx.fillText(s.subject, x, y + 6);
+          x -= colWidths[3];
+          ctx.fillStyle = '#4a4a5a';
+          ctx.font = '400 12px "Vazirmatn", sans-serif';
+          ctx.fillText(`${s.startTime} - ${s.endTime}`, x, y + 6);
+        }
+        y += lineHeight;
+      });
+      y += 4;
+    });
+
+    const link = document.createElement('a');
+    link.download = 'studyflow-schedule.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('خروجی PNG با موفقیت گرفته شد', 'success');
+  }
+
+  function copySchedule() {
+    let text = 'برنامه مطالعه استادی‌فلو\n' + '═'.repeat(40) + '\n\n';
+    schedule.forEach(day => {
+      text += `─── روز ${day.day} ───\n`;
+      day.sessions.forEach(s => {
+        if (s.type === 'study') {
+          text += `  ${s.startTime} - ${s.endTime}  |  ${s.subject}  |  ${formatDuration(s.duration)}${s.notes ? '  |  ' + s.notes : ''}\n`;
+        } else if (s.type === 'lunch') {
+          text += `  ${s.startTime} - ${s.endTime}  |  استراحت ناهار  |  ${formatDuration(s.duration)}\n`;
+        } else {
+          text += `  ${s.startTime} - ${s.endTime}  |  استراحت  |  ${formatDuration(s.duration)}\n`;
+        }
+      });
+      text += '\n';
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('برنامه در کلیپ‌بورد کپی شد', 'success');
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast('برنامه در کلیپ‌بورد کپی شد', 'success');
+    });
+  }
+
+  /* ====================== کانفتی ====================== */
+  function launchConfetti() {
+    const canvas = DOM.confettiCanvas;
+    canvas.style.display = 'block';
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const particles = [];
+    const colors = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6','#1abc9c','#e84393'];
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    for (let i = 0; i < 150; i++) {
+      particles.push({
+        x: w / 2 + (Math.random() - 0.5) * 300,
+        y: h / 2 - 100,
+        vx: (Math.random() - 0.5) * 16,
+        vy: Math.random() * -14 - 4,
+        pw: Math.random() * 8 + 4,
+        ph: Math.random() * 6 + 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        gravity: 0.25 + Math.random() * 0.1,
+        opacity: 1,
+        decay: 0.005 + Math.random() * 0.005
+      });
+    }
+
+    let animId;
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      let alive = false;
+      particles.forEach(p => {
+        if (p.opacity <= 0) return;
+        alive = true;
+        p.x += p.vx;
+        p.vy += p.gravity;
+        p.y += p.vy;
+        p.vx *= 0.99;
+        p.rotation += p.rotSpeed;
+        p.opacity -= p.decay;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.pw / 2, -p.ph / 2, p.pw, p.ph);
+        ctx.restore();
+      });
+
+      if (alive) {
+        animId = requestAnimationFrame(animate);
+      } else {
+        canvas.style.display = 'none';
+        cancelAnimationFrame(animId);
+      }
+    }
+    animate();
+  }
+
+  /* ====================== حافظه محلی ====================== */
+  function saveToStorage() {
+    try {
+      const data = {
+        subjects,
+        schedule,
+        subjectColors,
+        studyDays: DOM.studyDays.value,
+        difficulty: DOM.difficulty.value,
+        dailyHours: DOM.dailyHours.value,
+        sessionLength: DOM.sessionLength.value,
+        breakLength: DOM.breakLength.value,
+        startTime: DOM.startTime.value,
+        subjectIdCounter
+      };
+      localStorage.setItem('sf_data', JSON.stringify(data));
+    } catch (e) {
+      // حافظه ممکن است پر باشد
+    }
+  }
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem('sf_data');
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (data.subjects && Array.isArray(data.subjects)) {
+        subjects = data.subjects;
+        subjectIdCounter = data.subjectIdCounter || subjects.length;
+      }
+      if (data.schedule && Array.isArray(data.schedule)) {
+        schedule = data.schedule;
+      }
+      if (data.subjectColors) subjectColors = data.subjectColors;
+      if (data.studyDays) DOM.studyDays.value = data.studyDays;
+      if (data.difficulty) {
+        DOM.difficulty.value = data.difficulty;
+        updateDifficultyDisplay();
+      }
+      if (data.dailyHours) {
+        DOM.dailyHours.value = data.dailyHours;
+        DOM.dailyHoursVal.textContent = data.dailyHours + ' ساعت';
+      }
+      if (data.sessionLength) DOM.sessionLength.value = data.sessionLength;
+      if (data.breakLength) DOM.breakLength.value = data.breakLength;
+      if (data.startTime) DOM.startTime.value = data.startTime;
+      return schedule.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* ====================== بازنشانی ====================== */
+  function resetPlanner() {
+    subjects = [];
+    schedule = [];
+    subjectColors = {};
+    subjectIdCounter = 0;
+    undoStack = [];
+    redoStack = [];
+    currentPage = 0;
+    calMonth = 0;
+
+    DOM.studyDays.value = 7;
+    DOM.difficulty.value = 2;
+    DOM.dailyHours.value = 6;
+    DOM.dailyHoursVal.textContent = '6 ساعت';
+    DOM.sessionLength.value = '45';
+    DOM.breakLength.value = '5';
+    DOM.startTime.value = '08:00';
+    DOM.searchSubjects.value = '';
+    updateDifficultyDisplay();
+    updateUndoRedoButtons();
+
+    DOM.scheduleSection.style.display = 'none';
+    DOM.statsSection.style.display = 'none';
+    renderSubjects();
+    localStorage.removeItem('sf_data');
+    showToast('برنامه‌ریز بازنشانی شد', 'info');
+  }
+
+  /* ====================== نمایش سختی ====================== */
+  function updateDifficultyDisplay() {
+    const val = Number(DOM.difficulty.value);
+    DOM.diffDisplay.textContent = DIFFICULTY_NAMES[val - 1];
+    DOM.diffLabels.querySelectorAll('span').forEach((span, i) => {
+      span.classList.toggle('active-label', i === val - 1);
+    });
+  }
+
+  /* ====================== تولید برنامه ====================== */
+  function handleGenerate() {
+    if (!validateForm()) {
+      showToast('لطفاً خطاهای بالا را رفع کنید', 'error');
+      return;
+    }
+
+    undoStack = [];
+    redoStack = [];
+    updateUndoRedoButtons();
+
+    generateSchedule();
+
+    DOM.scheduleSection.style.display = 'block';
+    DOM.statsSection.style.display = 'block';
+    currentPage = 0;
+
+    renderTable();
+    renderStats();
+    if (currentView === 'calendar') renderCalendar();
+
+    DOM.scheduleSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    launchConfetti();
+    saveToStorage();
+
+    showToast(`برنامه تولید شد: ${schedule.length} روز`, 'success');
+  }
+
+  /* ====================== تغییر نمای ====================== */
+  function switchView(view) {
+    currentView = view;
+    DOM.tabTable.classList.toggle('active', view === 'table');
+    DOM.tabCalendar.classList.toggle('active', view === 'calendar');
+    DOM.tabTable.setAttribute('aria-selected', view === 'table');
+    DOM.tabCalendar.setAttribute('aria-selected', view === 'calendar');
+    DOM.tableView.style.display = view === 'table' ? '' : 'none';
+    DOM.calendarView.style.display = view === 'calendar' ? '' : 'none';
+    DOM.pagination.style.display = view === 'table' ? '' : 'none';
+
+    if (view === 'calendar') {
+      calMonth = 0;
+      renderCalendar();
+    }
+  }
+
+  /* ====================== صفحه‌بندی ====================== */
+  function changePage(delta) {
+    const maxPage = Math.ceil(schedule.length / pageSize) - 1;
+    currentPage = clamp(currentPage + delta, 0, maxPage);
+    renderTable();
+  }
+
+  /* ====================== اتصال رویدادها ====================== */
+  function bindEvents() {
+    DOM.themeToggle.addEventListener('click', toggleTheme);
+    DOM.undoBtn.addEventListener('click', undo);
+    DOM.redoBtn.addEventListener('click', redo);
+
+    DOM.inputToggle.addEventListener('click', () => toggleSection(DOM.inputToggle, DOM.inputBody));
+    DOM.inputToggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSection(DOM.inputToggle, DOM.inputBody);
+      }
+    });
+
+    DOM.addSubjectBtn.addEventListener('click', addSubject);
+    DOM.searchSubjects.addEventListener('input', (e) => renderSubjects(e.target.value));
+    DOM.difficulty.addEventListener('input', updateDifficultyDisplay);
+    DOM.dailyHours.addEventListener('input', () => {
+      DOM.dailyHoursVal.textContent = DOM.dailyHours.value + ' ساعت';
+    });
+
+    DOM.generateBtn.addEventListener('click', handleGenerate);
+
+    DOM.tabTable.addEventListener('click', () => switchView('table'));
+    DOM.tabCalendar.addEventListener('click', () => switchView('calendar'));
+
+    DOM.prevPage.addEventListener('click', () => changePage(-1));
+    DOM.nextPage.addEventListener('click', () => changePage(1));
+    DOM.pageSizeSelect.addEventListener('change', (e) => {
+      pageSize = Number(e.target.value);
+      currentPage = 0;
+      renderTable();
+    });
+
+    DOM.prevMonth.addEventListener('click', () => { calMonth--; renderCalendar(); });
+    DOM.nextMonth.addEventListener('click', () => { calMonth++; renderCalendar(); });
+
+    DOM.exportPrint.addEventListener('click', printSchedule);
+    DOM.exportPNG.addEventListener('click', exportPNG);
+    DOM.exportCopy.addEventListener('click', copySchedule);
+    DOM.resetBtn.addEventListener('click', resetPlanner);
+
+    let saveTimer;
+    const debouncedSave = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveToStorage, 1000); };
+    [DOM.studyDays, DOM.difficulty, DOM.dailyHours, DOM.sessionLength, DOM.breakLength, DOM.startTime].forEach(el => {
+      el.addEventListener('input', debouncedSave);
+      el.addEventListener('change', debouncedSave);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+    });
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (schedule.length > 0) renderStats();
+      }, 250);
+    });
+  }
+
+  /* ====================== راه‌اندازی ====================== */
+  function init() {
+    initTheme();
+    showRandomQuote();
+
+    const hasSchedule = loadFromStorage();
+    renderSubjects();
+
+    if (hasSchedule) {
+      DOM.scheduleSection.style.display = 'block';
+      DOM.statsSection.style.display = 'block';
+      renderTable();
+      renderStats();
+    } else if (subjects.length === 0) {
+      subjects = [
+        createSubject('ریاضیات', 1, 4, 12),
+        createSubject('فیزیک', 2, 3, 8),
+        createSubject('علوم کامپیوتر', 1, 4, 10),
+        createSubject('ادبیات فارسی', 4, 2, 4),
+        createSubject('شیمی', 3, 3, 6)
+      ];
+      renderSubjects();
+    }
+
+    updateDifficultyDisplay();
+    bindEvents();
+
+    setTimeout(() => {
+      DOM.loader.classList.add('hidden');
+      DOM.app.classList.add('visible');
+    }, 400);
+  }
+
+  // پولی‌فیل roundRect
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      this.moveTo(x + r, y);
+      this.lineTo(x + w - r, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + r);
+      this.lineTo(x + w, y + h - r);
+      this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      this.lineTo(x + r, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - r);
+      this.lineTo(x, y + r);
+      this.quadraticCurveTo(x, y, x + r, y);
+      this.closePath();
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
